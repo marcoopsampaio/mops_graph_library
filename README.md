@@ -1,6 +1,6 @@
 Graph utilities library
 =======================
-###by Marco O. P. Sampaio
+### by Marco O. P. Sampaio
 
 This is a simple library with a Graph class and various algorithms. To compile the library you will need a ```C++11``` compliant compiler. To compile all the sources run
 
