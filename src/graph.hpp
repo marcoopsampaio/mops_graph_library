@@ -11,6 +11,7 @@
 #include <cmath>
 #include <set>
 #include <queue>
+#include <stack>
 #include <numeric>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,12 +72,28 @@ public:
   friend void BFS_connected(Graph & gin, unsigned int start_node,
 			    std::vector<bool> & explored,
 			    std::vector<unsigned int> & cc_nodes);
-  friend void BFS_distances_from_source(Graph & gin, unsigned int start_node,
-					std::vector<unsigned int> & dists,
-					std::vector<unsigned int> & cc_nodes);
+  friend void BFS_reachable_from(Graph & gin,  unsigned int start_node,
+				 std::vector<unsigned int> & cfrom_nodes);
+  friend unsigned int BFS_distances_from_source(Graph & gin,
+						unsigned int start_node,
+						std::vector<unsigned int>
+						& dists,
+						std::vector<unsigned int>
+						& cc_nodes);
+  
   friend unsigned int BFS_shortest_path_length(Graph & gin,
 					       unsigned int start_node,
 					       unsigned int end_node);
+
+  friend void DFS_connected_internal_ids_(Graph & gin, unsigned int start_node,
+			    std::vector<bool> & explored,
+			    std::vector<unsigned int> & cc_nodes);
+  
+  friend void DFS_reachable_from_internal_ids_(Graph & gin,
+					       unsigned int start_node,
+					       std::vector<bool> & explored,
+					       std::vector<unsigned int>
+					       & cfrom_nodes);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +106,7 @@ public:
 
 // Explore a connected component of a graph and return its number of nodes. 
 // explored is either populated (if empty) or updated (if passed from
-// previous calls)
+// previous calls). This ignores edge direction.
 void BFS_connected(Graph & gin,unsigned int start_node,
 		   std::vector<bool> & explored,
 		   std::vector<unsigned int> & cc_nodes);
@@ -99,9 +116,12 @@ void BFS_connected(Graph & gin,unsigned int start_node,
 void BFS_all_connected_components(Graph & gin,
 				  std::vector<std::vector<unsigned int> >
 				  & all_ccs);
+// Explore nodes reachable from a given node (connected component if undirected)
+void BFS_reachable_from(Graph & gin,  unsigned int start_node,
+			std::vector<unsigned int> & cfrom_nodes);
 
 // Find all shortest distances from a source node
-void BFS_distances_from_source(Graph & gin, unsigned int start_node,
+unsigned int BFS_distances_from_source(Graph & gin, unsigned int start_node,
 			       std::vector<unsigned int> & dists,
 			       std::vector<unsigned int> & cc_nodes);
 
@@ -115,8 +135,22 @@ unsigned int BFS_shortest_path_length(Graph & gin, unsigned int start_node,
   ----------------------------------------------------------------------------*/
 
 
-// Explore a connected component of a graph and return it as new graph
-void DFS_connected(Graph & gin, Graph & gout, unsigned int start_node);
+// Explore a connected component of a graph (ignores direction of edges)
+void DFS_connected(Graph & gin, unsigned int start_node,
+		   std::vector<bool> & explored,
+		   std::vector<unsigned int> & cc_nodes);
+
+// Find all connected components of a graph and return a vector of vectors  of
+// nodes in each subgraph
+void DFS_all_connected_components(Graph & gin,
+				  std::vector<std::vector<unsigned int> >
+				  & all_ccs);
+
+// Explore nodes reachable from a given node (connected component if undirected)
+void DFS_reachable_from(Graph & gin,  unsigned int start_node,
+			std::vector<unsigned int> & cfrom_nodes);
+
+/////////
 
 // Find all connected components of a graph and return as a vector of graphs
 void DFS_all_connected_components(Graph & gin, std::vector<Graph> & all_gout);

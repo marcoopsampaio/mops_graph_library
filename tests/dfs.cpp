@@ -12,7 +12,7 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
 {
   ifstream graphin(filename);
   
-  cout << ">>> Testing BFS algorithms -------------------------------------\n\n"
+  cout << ">>> Testing DFS algorithms -------------------------------------\n\n"
        << "Graph filename is " << filename << "\n";
   if(directed)
     cout << "Loading graph as DIRECTED";
@@ -26,13 +26,24 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   if(printgraph)
     g0.print_graph(cout);
 
-  cout << "> Applying BFS to find all connected components (regardless of "
+  /*////////
+  vector<bool> g0explored;
+  vector<unsigned int> cc0_nodes;
+  std::vector<std::vector<unsigned int> > all0_ccs;
+  //cout << "----->" << std::numeric_limits<std::deque<unsigned int>::size_type>::max() << endl;
+  //exit(0);
+  DFS_connected(g0, 1, g0explored, cc0_nodes);
+  //DFS_reachable_from(g0, 3, cc0_nodes);
+  // BFS_all_connected_components(g0, all0_ccs);*/
+
+
+  cout << "> Applying DFS to find all connected components (regardless of "
     "directionality) ... \n" << endl;
   
   vector<bool> g0explored;
   vector<unsigned int> cc0_nodes;
   std::vector<std::vector<unsigned int> > all0_ccs;
-  BFS_all_connected_components(g0, all0_ccs);
+  DFS_all_connected_components(g0, all0_ccs);
   
   set<unsigned int> cc0_sizes;
   multiset<unsigned int> cc0_sizes_multi;
@@ -57,7 +68,7 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   cout << endl;
   cout << "number of nodes is "<<g0.n()<<endl;
   cout << "number of edges is "<<g0.m()<<endl;
-  
+  /*
   cout << "> Applying BFS to find all distances from node " << node1 << "... \n"
        << endl;
   std::vector<unsigned int> dists;
@@ -84,14 +95,14 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
 
   cout << "Distance between nodes " << node1 << " and " << node2
        << " is " << BFS_shortest_path_length(g0, node1, node2)
-       << "\n" << endl;
+       << "\n" << endl;*/
 }
 
 int main(){
 
   cout << "\n*************************************"
        << "\n***                               ***"
-       << "\n*** Tests of BFS based algorithms ***"
+       << "\n*** Tests of DFS based algorithms ***"
        << "\n***     (undirected graphs)       ***"
        << "\n***                               ***"
        << "\n*************************************\n\n"
@@ -101,7 +112,7 @@ int main(){
   run_all_tests("tests/graphs/graph1_dir_edges.txt", 1, 4, false, 10, true);
   
   // Small disconnected graph
-  run_all_tests("tests/graphs/graph1_cut1.txt", 1, 4, 10, false, true);
+  run_all_tests("tests/graphs/graph1_cut1.txt", 1, 4, false, 10, true);
 
   // Slightly larger connected graph
   run_all_tests("tests/graphs/graph2_dir_edges.txt", 7, 2, false, 10, true);
