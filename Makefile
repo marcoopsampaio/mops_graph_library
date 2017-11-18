@@ -19,10 +19,12 @@ LDLIBS =
 SRC = src
 BIN = bin
 TESTS = tests
-BUILD = build
+BUILDSRC = build/src
+BUILDTESTS = build/tests
 LIBPATH = lib
 $(shell mkdir -p $(BIN))
-$(shell mkdir -p $(BUILD))
+$(shell mkdir -p $(BUILDSRC))
+$(shell mkdir -p $(BUILDTESTS))
 $(shell mkdir -p $(LIBPATH))
 
 # Sources
@@ -30,7 +32,7 @@ SRCS = $(wildcard $(SRC)/*.cpp)
 SRCTESTS = $(wildcard $(TESTS)/*.cpp)
 
 # Objects, binaries and library
-OBJS = $(subst $(SRC),$(BUILD),$(subst .cpp,.o,$(SRCS)))
+OBJS = $(subst $(SRC),$(BUILDSRC),$(subst .cpp,.o,$(SRCS)))
 BINTESTS = $(subst $(TESTS),$(BIN),$(subst .cpp,,$(SRCTESTS)))
 LIBNAME = graph
 LIB = $(LIBPATH)/lib$(LIBNAME).a
@@ -39,13 +41,13 @@ LIB = $(LIBPATH)/lib$(LIBNAME).a
 ### RULES ####
 ##############
 
-all: lib tests
+all: cleanall lib tests
 
 # Rule to compile source
-$(BUILD)/%.o: $(SRC)/%.cpp 
+$(BUILDSRC)/%.o: $(SRC)/%.cpp 
 	$(CXX) $(CPPFLAGS) -o $@ -c $< $(LDFLAGS)
 
-$(BUILD)/%.o: $(TESTS)/%.cpp
+$(BUILDTESTS)/%.o: $(TESTS)/%.cpp
 	$(CXX) $(CPPFLAGS) -o $@ -c $< $(LDFLAGS)
 
 # Rule to create library
@@ -55,7 +57,7 @@ lib: $(OBJS)
 # Rules to create tests
 tests: $(BINTESTS)
 
-$(BIN)/%: $(BUILD)/%.o
+$(BIN)/%: $(BUILDTESTS)/%.o
 	$(CXX) $(CPPFLAGS) -o $@ $< $(OBJS) $(LDFLAGS) $(LDLIBS)
 
 # Rules to cleanup

@@ -94,6 +94,10 @@ public:
 					       std::vector<bool> & explored,
 					       std::vector<unsigned int>
 					       & cfrom_nodes);
+
+  friend void DFS_Kosaraju_reversed_(Graph & gin, unsigned int start_node);
+
+  friend void DFS_Kosaraju_direct_(Graph & gin, unsigned int start_node);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -150,19 +154,27 @@ void DFS_all_connected_components(Graph & gin,
 void DFS_reachable_from(Graph & gin,  unsigned int start_node,
 			std::vector<unsigned int> & cfrom_nodes);
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TO DO: make function that returns connected graph and then make the function
+// below
+// Apply DFS, find topological sorting and return true is graph is acyclic
+//////bool DFS_topological_sort(Graph & gin, unsigned int start_node,
+//////			  std::vector<unsigned int> & idx_topo);
+
 /////////
 
-// Find all connected components of a graph and return as a vector of graphs
-void DFS_all_connected_components(Graph & gin, std::vector<Graph> & all_gout);
 
-// Apply DFS, find topological sorting and check graphi is acyclic 
-void DFS_topological_sort(Graph & gin,
-			  std::vector<unsigned int> & topological_index);
-
-// Find the sizes of the top 5 strongly connected components of a graph
-void SCC_Kosaraju_sizes_top5(Graph & gin, std::set<unsigned int> & dims_top5);
+/*/ Find the sizes of the top 5 strongly connected components of a graph
+void SCC_Kosaraju_sizes_top5(Graph & gin, std::set<unsigned int> & dims_top5);*/
 
 // Find all the strongly connected components of a graph
-void SCC_Kosaraju(Graph & gin, std::vector<Graph> & all_SCCs);
+void SCC_Kosaraju(Graph & gin, std::multiset<unsigned int> & all_SCC_sizes,
+		  std::set<unsigned int> & all_SCC_setsizes);
+
+static std::vector<bool> explored1;
+static std::vector<bool> explored2;
+static std::vector<unsigned int> finishing_vec;
+static unsigned int leader;
+static unsigned int leader_count;
 
 #endif

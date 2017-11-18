@@ -546,34 +546,23 @@ void DFS_reachable_from_internal_ids_(Graph & gin,  unsigned int start_node,
 				 std::vector<bool> & explored,
 				 std::vector<unsigned int> & cfrom_nodes)
 {
-  std::cout << "stop1 at start_node " << start_node<< std::flush;
-  std::cout << " with gin.id_of_index(start_node) "
-	    << gin.id_of_index(start_node) << std::endl;
+
   explored[start_node]=true; // mark start node explored
   cfrom_nodes.push_back(gin.id_of_index(start_node));
 
   for(std::list<unsigned int>::iterator it = gin.nodes_[start_node].begin();
       it != gin.nodes_[start_node].end(); ++it)
-    {
-      std::cout<< "node "<< start_node << std::flush;
-      std::cout<< " edge_n1 "<< gin.edges_[*it].first << std::flush;
-      std::cout<< " edge_n2 "<< gin.edges_[*it].second << std::endl;
-      
+    { 
       if(gin.edges_[*it].first == start_node
-	 && !explored[gin.edges_[*it].second]){
-	std::cout << " call option 1"<<std::endl;
+	 && !explored[gin.edges_[*it].second])
 	DFS_reachable_from_internal_ids_(gin,
 					 gin.edges_[*it].second, explored,
 					 cfrom_nodes);
-      }
       else if(!gin.edges_[*it].directed && gin.edges_[*it].second == start_node
-	      && !explored[gin.edges_[*it].first]){
-	std::cout << " call option 2"<<std::endl;
+	      && !explored[gin.edges_[*it].first])
 	DFS_reachable_from_internal_ids_(gin,
 					 gin.edges_[*it].first, explored,
 					 cfrom_nodes);
-      }
-      std::cout<< "stop2" <<std::endl;
     }
   
 #ifdef VERBOSE
@@ -622,4 +611,57 @@ void DFS_reachable_from(Graph & gin,  unsigned int start_node,
   //Run using internal ids
   DFS_reachable_from_internal_ids_(gin, gin.index_of_id(start_node),
 				   explored, cfrom_nodes);
+}
+
+void DFS_Kosaraju_reversed_(Graph & gin, unsigned int start_node)
+{
+  explored1[start_node] = true;
+  for(std::list<unsigned int>::iterator it = gin.nodes_[start_node].begin();
+      it != gin.nodes_[start_node].end(); ++it)
+    if(gin.edges_[*it].second == start_node
+       && !explored1[gin.edges_[*it].first])
+      DFS_Kosaraju_reversed_(gin, gin.edges_[*it].first);
+  finishing_vec.push_back(start_node); // add finished node to vector
+}
+
+void DFS_Kosaraju_direct_(Graph & gin, unsigned int start_node)
+{
+  explored2[start_node] = true;
+  ++leader_count; // increment count for this leader
+  for(std::list<unsigned int>::iterator it = gin.nodes_[start_node].begin();
+      it != gin.nodes_[start_node].end(); ++it)
+    if(gin.edges_[*it].first == start_node
+       && !explored2[gin.edges_[*it].second])
+      DFS_Kosaraju_direct_(gin, gin.edges_[*it].second);
+}
+
+
+void SCC_Kosaraju(Graph & gin, std::multiset<unsigned int> & all_SCC_sizes,
+		  std::set<unsigned int> & all_SCC_setsizes)
+{
+  // Perform first pass on the whole reversed graph
+  explored1.resize(gin.n(),false);
+  // loop over all nodes
+  for(unsigned int i = 0; i != gin.n(); ++i)
+      if(!explored1[i])
+	DFS_Kosaraju_reversed_(gin, i);
+  
+  // Peform second pass and store multiplicities of leaders in the multiset
+  explored2.resize(gin.n(),false);
+  // loop over all nodes
+  for(std::vector<unsigned int>::iterator it = --finishing_vec.end();
+      it != --finishing_vec.begin(); --it)
+    if(!explored2[*it])
+      {
+	leader = *it;
+	leader_count = 0;
+	DFS_Kosaraju_direct_(gin, *it);
+	all_SCC_sizes.insert(leader_count);
+	all_SCC_setsizes.insert(leader_count);
+      }
+  
+  finishing_vec.clear();
+  explored1.clear();
+  explored2.clear();
+  
 }

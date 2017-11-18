@@ -23,6 +23,8 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   cout << "> Loading graph into memory ... " << endl;
   Graph g0(graphin, 0, directed); // undirected read from edges list
   std::clog<<" ... done with loading graph! \n "<<endl;
+  cout << "number of nodes is " << g0.n() << endl;
+  cout << "number of edges is " << g0.m() << "\n" << endl;
   if(printgraph)
     g0.print_graph(cout);
 
@@ -66,39 +68,48 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
 	   << endl;
     }
   cout << endl;
-  cout << "number of nodes is "<<g0.n()<<endl;
-  cout << "number of edges is "<<g0.m()<<endl;
-  /*
-  cout << "> Applying BFS to find all distances from node " << node1 << "... \n"
+ 
+  cout << "> Applying DFS to find all nodes reachable from "
+       << node1 << "... \n"
        << endl;
-  std::vector<unsigned int> dists;
-  std::vector<unsigned int> cc_nodes;
-  unsigned int nlayers = BFS_distances_from_source(g0, node1, dists, cc_nodes);
+  std::vector<unsigned int> cfrom_nodes;
+  DFS_reachable_from(g0, node1, cfrom_nodes);
 
-  cout << "Number of nodes in first "
-       << ((nprint < nlayers) ? nprint : nlayers)
-       << " layers: \n";
+  cout << " Printing "
+       << ((nprint < cfrom_nodes.size()) ? nprint : cfrom_nodes.size())
+       << " nodes reachable: \n";
 
-  for(unsigned int ilayer = 0, iccnodes = 0;
-      ilayer < nprint && iccnodes != cc_nodes.size(); ++ilayer)
+  for(unsigned int i = 0; i < nprint && i < cfrom_nodes.size(); ++i)
+    cout << cfrom_nodes[i] << ", \t";
+  cout << "\n" << endl;
+
+  std::multiset<unsigned int> all_SCC_sizes;
+  std::set<unsigned int> all_SCC_setsizes;
+
+  SCC_Kosaraju(g0, all_SCC_sizes, all_SCC_setsizes);
+
+  std::cout << " all_SCC_sizes.size() is "
+	    << all_SCC_sizes.size() << std::endl;
+  std::cout << " all_SCC_setsizes.size() is "
+	    << all_SCC_setsizes.size() << std::endl;
+
+  std::cout << "Printing out multiplicity, SCC size pairs for the top 5:"
+	    << std::endl;
+  short int i{0};
+  for(std::set<unsigned int>::iterator it = --all_SCC_setsizes.end();
+      it != --all_SCC_setsizes.begin() && i != 5; --it)
     {
-      unsigned int icount = 0;
-      while(iccnodes != cc_nodes.size() &&
-	    dists[g0.index_of_id(cc_nodes[iccnodes])] == ilayer)
-	{
-	  ++icount;
-	  ++iccnodes;
-	}
-      cout << icount << " nodes in layer " << ilayer << "\n";
+      std::cout << all_SCC_sizes.count(*it) << " of size "<< *it<< std::endl;
+      ++i;
     }
-  cout << endl;
-
-  cout << "Distance between nodes " << node1 << " and " << node2
-       << " is " << BFS_shortest_path_length(g0, node1, node2)
-       << "\n" << endl;*/
 }
 
 int main(){
+  cout << "WARNING: you may have to set $ulimit -s 80000, for this to work!"
+    "type Y and enter to continue!"
+       << endl;
+  string dummy;
+  cin >> dummy;
 
   cout << "\n*************************************"
        << "\n***                               ***"
@@ -109,19 +120,19 @@ int main(){
        << flush;
 
   // Small connected graph
-  run_all_tests("tests/graphs/graph1_dir_edges.txt", 1, 4, false, 10, true);
+  run_all_tests("tests/graphs/graph1_dir_edges.txt", 1, 4, false, 6, true);
   
   // Small disconnected graph
-  run_all_tests("tests/graphs/graph1_cut1.txt", 1, 4, false, 10, true);
+  run_all_tests("tests/graphs/graph1_cut1.txt", 1, 4, false, 6, true);
 
   // Slightly larger connected graph
-  run_all_tests("tests/graphs/graph2_dir_edges.txt", 7, 2, false, 10, true);
+  run_all_tests("tests/graphs/graph2_dir_edges.txt", 7, 2, false, 13, true);
 
   // Slightly larger connected graph considering directed edges
-  run_all_tests("tests/graphs/graph2_dir_edges.txt", 5, 11, true, 10, true);
+  run_all_tests("tests/graphs/graph2_dir_edges.txt", 5, 11, true, 13, true);
   
   // Slightly larger connected graph -- disconnected version
-  run_all_tests("tests/graphs/graph2_cut1.txt", 6, 13, false, 10, true);
+  run_all_tests("tests/graphs/graph2_cut1.txt", 6, 13, false, 13, true);
 
   // Large graph
   run_all_tests("tests/graphs/SCC_graph_dir_edges.txt",
