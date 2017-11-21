@@ -13,22 +13,55 @@
 #include <queue>
 #include <stack>
 #include <numeric>
+#include <algorithm>
+#include <tuple>
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Classes & Types /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class Edge{
+class myHeap
+{
 public:
-  unsigned int first,second;
+  // Contains score, node number and current edge associated with score
+  std::vector<std::tuple<unsigned int, unsigned int, unsigned int> > heap_data;
+  // Vector to hold the location of each node in the heap vector;
+  std::vector<unsigned int> pos_node_heap;
+  unsigned int heapsize;
+
+  void insert(std::tuple<unsigned int, unsigned int, unsigned int> triplet);
+  std::tuple<unsigned int, unsigned int, unsigned int> extract_min();
+  void remove(unsigned int pos_del);
+
+  // Constructor
+  myHeap(unsigned int n_nodes): heap_data(n_nodes),
+				pos_node_heap(n_nodes,
+					      std::numeric_limits<unsigned
+					      int>::max()),
+				heapsize{0}{};
+
+  void print();
+  
+};
+
+class Edge
+{
+public:
+  unsigned int first, second, weight;
   const bool directed;
-  Edge(unsigned int first_in,unsigned int second_in):first{first_in},
-						     second{second_in},
-						     directed{false}{};
-  Edge(unsigned int first_in,
-       unsigned int second_in, bool directed_in):first{first_in},
-						     second{second_in},
-						     directed{directed_in}{};
+  Edge(unsigned int first_in,unsigned int second_in):
+    first{first_in}, second{second_in}, weight{1}, directed{false}{};
+  
+  Edge(unsigned int first_in,unsigned int second_in, bool directed_in):
+    first{first_in}, second{second_in}, weight{1}, directed{directed_in}{};
+  
+  Edge(unsigned int first_in,unsigned int second_in, unsigned int weight_in):
+    first{first_in},second{second_in}, weight{weight_in}, directed{false}{};
+  
+  Edge(unsigned int first_in, unsigned int second_in, unsigned int weight_in,
+       bool directed_in):first{first_in}, second{second_in}, weight{weight_in},
+			 directed{directed_in}{};
+
 };
 
 typedef std::vector<std::list<unsigned int> > NodesVec;
@@ -44,13 +77,14 @@ class Graph
 
   // Utilities for constructor
   void stream_read0_graph_by_edges(std::istream & in_stream, bool directed = 0);
-  void stream_read1_graph_by_nodes(std::istream & in_stream, bool directed = 0);
+  void stream_read1_graph_by_nodes(std::istream & in_stream, bool directed = 0,
+				   bool weighted = 0);
   
 public:
   // Constructors
   Graph(){}; // start empty (to add nodes and edges in algorithms)
   Graph(std::istream & in_stream, bool input_type = 0,
-	bool directed = 0); // from stream
+	bool directed = 0, bool weighted = 0); // from stream
   ////////Graph(EdgesVec & edges_in, bool directed = 0); // from vector of edges
   
   // Reset the graph to an empty state
@@ -66,7 +100,7 @@ public:
   unsigned int m(){return edges_.size();};
   
   // Print out utilities
-  void print_graph(std::ostream & os, bool internal = 0);
+  void print_graph(std::ostream & os, bool weighted = 0, bool internal = 0);
 
   
   friend void BFS_connected(Graph & gin, unsigned int start_node,
@@ -153,6 +187,15 @@ void DFS_all_connected_components(Graph & gin,
 // Explore nodes reachable from a given node (connected component if undirected)
 void DFS_reachable_from(Graph & gin,  unsigned int start_node,
 			std::vector<unsigned int> & cfrom_nodes);
+
+/*------------------------------------------------------------------------------
+  Dijkstra's based algorithms
+  ----------------------------------------------------------------------------*/
+
+// Find all shortest paths from a source node and corresponding distances
+void Dijktra_shortest_paths(Graph & gin,  unsigned int start_node,
+			std::vector<unsigned int> & dists,
+			std::vector< std::vector<unsigned int> > & paths);
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TO DO: make function that returns connected graph and then make the function

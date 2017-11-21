@@ -15,10 +15,11 @@
 
 
 // Constructor from stream
-Graph::Graph(std::istream & in_stream, bool input_type, bool directed)
+Graph::Graph(std::istream & in_stream, bool input_type, bool directed,
+	     bool weighted)
 {
   if(input_type)
-    this->stream_read1_graph_by_nodes(in_stream, directed);
+    this->stream_read1_graph_by_nodes(in_stream, directed, weighted);
   else
     this->stream_read0_graph_by_edges(in_stream, directed);
 }
@@ -87,8 +88,99 @@ void Graph::stream_read0_graph_by_edges(std::istream & in_stream,
 
 // Read graph from list of nodes
 void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
-					bool directed)
+					bool directed, bool weighted)
 {
+  /*******************************************
+    Variables to read graph from input stream
+  ********************************************/
+  std::map<unsigned int, std::list< std::pair<unsigned int, unsigned int> > >
+    graph_in_by_nodes; //input graph
+  std::string line; // string to read lines of file one by one
+  unsigned int i; // vertex raw index
+
+  /*******************************************
+    Read the graph
+  ********************************************/
+  while(std::getline(in_stream,line))
+    {
+      std::stringstream ss(line); // current vertex info
+      unsigned int j, weight; // integer to read incident vertex in edge
+      char dummy;
+      ss >> i; // read current vertex index
+      // list of vertices reached from i0
+      std::list<std::pair<unsigned int, unsigned int> > jlist; 
+      while(ss >> j)
+	{
+	  ss >> dummy;
+	  ss >> weight;
+	  // read vertices into list
+	  jlist.push_back(std::pair<unsigned int, unsigned int>(j,weight)); 
+	}
+      graph_in_by_nodes[i] = jlist; //add line to graph
+    }
+  
+  // new index to run from zero to graph_in_by_nodes.size() -1
+  unsigned int i0{0}; 
+  std::map<unsigned int, unsigned int> indx, indx0; // map to save standardized
+  // index
+  
+  /*******************************************
+    Re-map indices
+  ********************************************/
+  for(std::map<unsigned int,
+	std::list<std::pair<unsigned int, unsigned int> > >::iterator
+	it = graph_in_by_nodes.begin(); it != graph_in_by_nodes.end(); ++it)
+    {
+      id_nodes_.push_back(it->first);
+      index_of_ids_[it->first] = i0;
+      ++i0;
+    }
+  this->nodes_.clear(); // Make sure nodes_ is empty.
+  this->nodes_.resize(i0); // prepare nodes data structure to hold edges
+  
+  /*******************************************
+    Create maps representation of the graph
+    and check that the graph is consistent using 
+    the adjacency matrix
+  ********************************************/
+
+  // Adjacency matrix initialised to zero
+  std::vector< std::vector<unsigned int> > 
+    Adj(graph_in_by_nodes.size(),
+	std::vector<unsigned int>(graph_in_by_nodes.size(),0));
+
+  unsigned int iedge = 0;
+  for(unsigned int i0 = 0; i0 != graph_in_by_nodes.size(); ++i0)
+    {
+      for(std::list< std::pair<unsigned int, unsigned int> >::iterator
+	    it = graph_in_by_nodes.at(id_nodes_[i0]).begin();
+	  it != graph_in_by_nodes.at(id_nodes_[i0]).end(); ++it)
+	{
+	    
+	  if(index_of_ids_[it->first] > i0) // avoid double counting of edges
+	    {
+	      this->edges_.push_back(Edge(i0, index_of_ids_[it->first], it->second,
+					  directed)); // Add edge
+	      nodes_[i0].push_back(iedge); // add edge to first node
+	      // add edge to second node
+	      nodes_[index_of_ids_[it->first]].push_back(iedge); 
+	      ++iedge; // next edge
+	    }
+	  Adj[i0][index_of_ids_[it->first]] += 1; // add to adjacency matrix
+	}
+    }
+  
+  // Check for inconsistencies
+  for(unsigned int i = 0; i != Adj.size();++i)
+    for(unsigned int j = i+1; j != Adj.size(); ++j)
+      if(Adj[i][j] != Adj[j][i]) // Exit program in error 
+	{
+	  std::cerr << std::endl
+		    << "Error from void Graph::stream_read1_graph_by_nodes"
+	    "(std::istream & in_stream, bool directed, bool weighted):"
+		    << " Inconsistent adjacency matrix."<<std::endl;
+	  exit(EXIT_FAILURE);
+	}	
   
 }
 
@@ -105,7 +197,7 @@ void Graph::clear()
 // Output //
 ////////////
 
-void Graph::print_graph(std::ostream & os, bool internal)
+void Graph::print_graph(std::ostream & os, bool weighted, bool internal)
 {
   os << " *** Printing out adjacency list data for this graph *** \n\n";
   // Print out nodes list
@@ -126,7 +218,7 @@ void Graph::print_graph(std::ostream & os, bool internal)
   for(EdgesVec::size_type i = 0; i != edges_.size(); ++i)
     {
       os << " edge " << i << ": ";
-      unsigned int i0,i1;
+      unsigned int i0, i1;
       if(internal){
 	i0 = edges_[i].first;
 	i1 = edges_[i].second;
@@ -137,9 +229,160 @@ void Graph::print_graph(std::ostream & os, bool internal)
       }
       os << i0;
       edges_[i].directed ? os <<" ---> " : os <<" --- ";
-      os << i1 << std::endl;
+      os << i1;
+      weighted ? os << " | weight: " << edges_[i].weight : os ; 
+      os << std::endl;
     }
   os << std::endl;
+}
+
+// Heap stuff
+
+void myHeap::insert(std::tuple<unsigned int,
+		    unsigned int, unsigned int> triplet)
+{
+  heap_data[heapsize] = triplet; // add new element to heap (breaks heap)
+  // store iterator pointing to element just added
+  pos_node_heap[std::get<1>(triplet)] = heapsize;
+  //bubble up element to the correct position in heap
+  unsigned int pos_child = heapsize++; // get heapsize and increase it
+  int pos_parent = (pos_child+1)/2-1;
+  
+  while(pos_parent >= 0 &&
+	std::get<0>(heap_data[pos_parent])
+	> std::get<0>(heap_data[pos_child]))
+    {
+      // Swap positions
+      unsigned int pos_temp = pos_node_heap[std::get<1>(heap_data[pos_child])];
+      
+      pos_node_heap[std::get<1>(heap_data[pos_child])] =
+	pos_node_heap[std::get<1>(heap_data[pos_parent])];
+      pos_node_heap[std::get<1>(heap_data[pos_parent])] = pos_temp;
+
+      // Swap triplet data
+      std::tuple<unsigned int,
+		 unsigned int, unsigned int> temp = heap_data[pos_child];
+      
+      heap_data[pos_child] = heap_data[pos_parent];
+      heap_data[pos_parent] = temp;
+      
+      // Recompute parent
+      pos_child = pos_parent;
+      pos_parent = (pos_child+1)/2-1;
+    }
+  
+}
+
+void myHeap::remove(unsigned int pos_del)
+{
+  // Swap with last element and reduce heapsize
+  if(pos_del == (heapsize - 1))
+    {
+      // Destroy position of node in heap
+      pos_node_heap[std::get<1>(heap_data[pos_del])]
+	= std::numeric_limits<unsigned int>::max();
+      --heapsize;
+    }
+  else if(pos_del< heapsize &&
+     pos_node_heap[pos_del] != std::numeric_limits<unsigned int>::max())
+    {
+      // Destroy position of node in heap
+      pos_node_heap[std::get<1>(heap_data[pos_del])]
+	= std::numeric_limits<unsigned int>::max();
+      // Put last element in heap position of deleted element
+      heap_data[pos_del] = heap_data[--heapsize];
+      // correct stored position
+      pos_node_heap[std::get<1>(heap_data[heapsize])] = pos_del;
+      unsigned int score{std::get<0>(heap_data[pos_del])};
+      // Bubble down if necessary to restore heap property
+      unsigned int pos_child1{2*pos_del+1}, pos_child2{2*(pos_del+1)};
+      unsigned int pos{pos_del};
+      while(pos_child1 <= heapsize)
+	{
+	  if(pos_child2 <= heapsize)
+	    {
+	      unsigned int score1{std::get<0>(heap_data[pos_child1])};
+	      unsigned int score2{std::get<0>(heap_data[pos_child2])};
+	      if(score > score1 && score1 <= score2)
+		{
+		  //Swap with child1
+		  pos_node_heap[std::get<1>(heap_data[pos_child1])] = pos;
+		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child1;
+
+		  // Swap triplet data
+		  std::tuple<unsigned int, unsigned int,
+			     unsigned int> temp = heap_data[pos_child1];
+		  heap_data[pos_child1] = heap_data[pos];
+		  heap_data[pos] = temp;
+		  pos = pos_child1;
+		}
+	      else if (score > score2 && score2 <= score1)
+		{
+		  //Swap with child2
+		  pos_node_heap[std::get<1>(heap_data[pos_child2])] = pos;
+		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child2;
+
+		  // Swap triplet data
+		  std::tuple<unsigned int, unsigned int,
+			     unsigned int> temp = heap_data[pos_child2];
+		  heap_data[pos_child2] = heap_data[pos];
+		  heap_data[pos] = temp;
+		  pos = pos_child2;
+		}
+	      else
+		break; // Nothing to do. Heap property restored!
+	    }
+	  else
+	    {
+	      unsigned int score1{std::get<0>(heap_data[pos_child1])};
+	      if(score > score1)
+		{
+		  //Swap with child1
+		  pos_node_heap[std::get<1>(heap_data[pos_child1])] = pos;
+		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child1;
+
+		  // Swap triplet data
+		  std::tuple<unsigned int, unsigned int,
+			     unsigned int> temp = heap_data[pos_child1];
+		  heap_data[pos_child1] = heap_data[pos];
+		  heap_data[pos] = temp;
+		  pos = pos_child1;
+		}
+	      else
+		break; // Nothing to do. Heap property restored!
+	    }
+	}
+    }
+  else
+    {
+      std::cerr << "error: from void myHeap::remove(unsigned int pos_del):"
+	" attempting to delete a node not in the heap" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+  
+}
+
+
+std::tuple<unsigned int, unsigned int, unsigned int> myHeap::extract_min()
+{
+  std::tuple<unsigned int, unsigned int, unsigned int> out = heap_data[0];
+  this->remove(0);
+  return out;
+}
+
+void myHeap::print()
+{
+  std::cout << "> Printing out data stored in this myHeap... \n" << std::endl;
+  std::cout << ">> (score, node, edge) \n";
+  for(unsigned int i = 0; i != heap_data.size(); ++i)
+    std::cout << std::get<0>(heap_data[i]) << "\t"
+	 << std::get<1>(heap_data[i]) << "\t"
+	 << std::get<2>(heap_data[i]) << std::endl;
+  std::cout << ">> (node, position) \n";
+  for(unsigned int i = 0; i != heap_data.size(); ++i)
+    std::cout << i << "\t"
+	 << pos_node_heap[i] <<  std::endl;
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -665,3 +908,58 @@ void SCC_Kosaraju(Graph & gin, std::multiset<unsigned int> & all_SCC_sizes,
   explored2.clear();
   
 }
+
+/*------------------------------------------------------------------------------
+  Dijkstra's based algorithms
+  ----------------------------------------------------------------------------*/
+
+/*bool comp(std::tuple<unsigned int, unsigned int, unsigned int> p1,
+	  std::tuple<unsigned int, unsigned int, unsigned int> p2)
+{ // WARNING: Here I invert the std heap behaviour to keep the smallest value
+  // at the top pf the heap!
+  return std::get<0>(p1) > std::get<0>(p2);
+  }*/
+
+/*/ Find all shortest paths from a source node and corresponding distances
+void Dijktra_shortest_paths(Graph & gin,  unsigned int start_node,
+			std::vector<unsigned int> & dists,
+			std::vector< std::vector<unsigned int> > & paths)
+{
+  // Prepare data structures
+  // Prepare vector to hold distances of each node to start_node
+  if(dists.size() != 0) 
+    dists.clear();
+  dists.resize(gin.n(),1000000);
+  // Prepare vector to hold shortest paths between each node and start_node
+  if(paths.size() != 0) 
+    paths.clear();
+  paths.resize(gin.n());
+  // Prepare vector to check if in heap
+  std::vector<bool> in_heap(gin.n(),true);
+  dists[0] = 0; // Set start_node to zero distance
+  in_heap[0] = false; // and not in heap
+
+  // Prepare heap vector to hold nodes not in explored part
+  std::vector< std::tuple<unsigned int,
+			  unsigned int, unsigned int> > heap_nodes;
+  // Put all nodes in heap except first one.
+  for(unsigned int i = 1; i != gin.m(); ++i)
+    {
+      ////////////
+    }
+ 
+  std::make_heap(heap_nodes.begin(), heap_nodes.end() ,comp);
+  // iterator to keep track of heap length
+  std::vector< std::tuple<unsigned int, unsigned int, unsigned int> >::iterator
+    it_heap_end = heap_nodes.end();
+  
+  
+  //Loop over all edges of start_node to prepare heap
+  
+  while(it_heap_end != heap_nodes.begin())
+    {
+      // Get minimum from heap to identify relevant edge
+
+      // Update all nodes
+    }
+}//*/
