@@ -23,23 +23,23 @@ int main(){
   myHeap h1(dmax);
   
   cout << "\nInsert 1..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(7,0,3));
+  h1.insert(Triplet(7,0,3));
   h1.print();
   
   cout << "\nInsert 2..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(10,1,4));
+  h1.insert(Triplet(10,1,4));
   h1.print();
 
   cout << "\nInsert 3..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(1,2,5));
+  h1.insert(Triplet(1,2,5));
   h1.print();
 
   cout << "\nInsert 4..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(5,3,6));
+  h1.insert(Triplet(5,3,6));
   h1.print();
 
   cout << "\nInsert 5..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(6,4,6));
+  h1.insert(Triplet(6,4,6));
   h1.print();
 
   cout << "\nRemove 1..." << endl;
@@ -51,16 +51,15 @@ int main(){
   h1.print();
 
   cout << "\nPost remove insert..." << endl;
-  h1.insert(std::tuple<unsigned int, unsigned int, unsigned int>(3,1,7));
+  h1.insert(Triplet(3,1,7));
   h1.print();
 
   cout << "\nExtract min..." << endl;
-  std::tuple<unsigned int, unsigned int, unsigned int>
-    mintuple = h1.extract_min();
+  Triplet mintuple = h1.extract_min();
   cout << "mintuple" << endl;
-  cout << std::get<0>(mintuple)<<endl;
-  cout << std::get<1>(mintuple)<<endl;
-  cout << std::get<2>(mintuple)<<endl << endl;
+  cout << mintuple.t0<<endl;
+  cout << mintuple.t1<<endl;
+  cout << mintuple.t2<<endl << endl;
   
   h1.print();
 

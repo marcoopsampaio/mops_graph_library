@@ -238,30 +238,26 @@ void Graph::print_graph(std::ostream & os, bool weighted, bool internal)
 
 // Heap stuff
 
-void myHeap::insert(std::tuple<unsigned int,
-		    unsigned int, unsigned int> triplet)
+void myHeap::insert(Triplet triplet)
 {
   heap_data[heapsize] = triplet; // add new element to heap (breaks heap)
   // store iterator pointing to element just added
-  pos_node_heap[std::get<1>(triplet)] = heapsize;
+  pos_node_heap[triplet.t1] = heapsize;
   //bubble up element to the correct position in heap
   unsigned int pos_child = heapsize++; // get heapsize and increase it
   int pos_parent = (pos_child+1)/2-1;
   
-  while(pos_parent >= 0 &&
-	std::get<0>(heap_data[pos_parent])
-	> std::get<0>(heap_data[pos_child]))
+  while(pos_parent >= 0 && heap_data[pos_parent].t0 > heap_data[pos_child].t0)
     {
       // Swap positions
-      unsigned int pos_temp = pos_node_heap[std::get<1>(heap_data[pos_child])];
+      unsigned int pos_temp = pos_node_heap[heap_data[pos_child].t1];
       
-      pos_node_heap[std::get<1>(heap_data[pos_child])] =
-	pos_node_heap[std::get<1>(heap_data[pos_parent])];
-      pos_node_heap[std::get<1>(heap_data[pos_parent])] = pos_temp;
+      pos_node_heap[heap_data[pos_child].t1] =
+	pos_node_heap[heap_data[pos_parent].t1];
+      pos_node_heap[heap_data[pos_parent].t1] = pos_temp;
 
       // Swap triplet data
-      std::tuple<unsigned int,
-		 unsigned int, unsigned int> temp = heap_data[pos_child];
+      Triplet temp{heap_data[pos_child]};
       
       heap_data[pos_child] = heap_data[pos_parent];
       heap_data[pos_parent] = temp;
@@ -275,81 +271,82 @@ void myHeap::insert(std::tuple<unsigned int,
 
 void myHeap::remove(unsigned int pos_del)
 {
+  
   // Swap with last element and reduce heapsize
   if(pos_del == (heapsize - 1))
     {
       // Destroy position of node in heap
-      pos_node_heap[std::get<1>(heap_data[pos_del])]
+      pos_node_heap[heap_data[pos_del].t1]
 	= std::numeric_limits<unsigned int>::max();
       --heapsize;
     }
-  else if(pos_del< heapsize &&
-     pos_node_heap[pos_del] != std::numeric_limits<unsigned int>::max())
+  else if(pos_del< heapsize)
     {
       // Destroy position of node in heap
-      pos_node_heap[std::get<1>(heap_data[pos_del])]
+      pos_node_heap[heap_data[pos_del].t1]
 	= std::numeric_limits<unsigned int>::max();
       // Put last element in heap position of deleted element
       heap_data[pos_del] = heap_data[--heapsize];
       // correct stored position
-      pos_node_heap[std::get<1>(heap_data[heapsize])] = pos_del;
-      unsigned int score{std::get<0>(heap_data[pos_del])};
+      pos_node_heap[heap_data[heapsize].t1] = pos_del;
+      unsigned int score{heap_data[pos_del].t0};
       // Bubble down if necessary to restore heap property
       unsigned int pos_child1{2*pos_del+1}, pos_child2{2*(pos_del+1)};
       unsigned int pos{pos_del};
-      while(pos_child1 <= heapsize)
+      while(pos_child1 < heapsize)
 	{
-	  if(pos_child2 <= heapsize)
+	  if(pos_child2 < heapsize)
 	    {
-	      unsigned int score1{std::get<0>(heap_data[pos_child1])};
-	      unsigned int score2{std::get<0>(heap_data[pos_child2])};
+	      unsigned int score1{heap_data[pos_child1].t0};
+	      unsigned int score2{heap_data[pos_child2].t0};
 	      if(score > score1 && score1 <= score2)
 		{
 		  //Swap with child1
-		  pos_node_heap[std::get<1>(heap_data[pos_child1])] = pos;
-		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child1;
+		  pos_node_heap[heap_data[pos_child1].t1] = pos;
+		  pos_node_heap[heap_data[pos].t1] = pos_child1;
 
 		  // Swap triplet data
-		  std::tuple<unsigned int, unsigned int,
-			     unsigned int> temp = heap_data[pos_child1];
+		  Triplet temp{heap_data[pos_child1]};
 		  heap_data[pos_child1] = heap_data[pos];
 		  heap_data[pos] = temp;
 		  pos = pos_child1;
+		  pos_child1 = 2*pos+1;
+		  pos_child2 = 2*pos+2;
 		}
 	      else if (score > score2 && score2 <= score1)
 		{
 		  //Swap with child2
-		  pos_node_heap[std::get<1>(heap_data[pos_child2])] = pos;
-		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child2;
+		  pos_node_heap[heap_data[pos_child2].t1] = pos;
+		  pos_node_heap[heap_data[pos].t1] = pos_child2;
 
 		  // Swap triplet data
-		  std::tuple<unsigned int, unsigned int,
-			     unsigned int> temp = heap_data[pos_child2];
+		  Triplet temp{heap_data[pos_child2]};
 		  heap_data[pos_child2] = heap_data[pos];
 		  heap_data[pos] = temp;
 		  pos = pos_child2;
+		  pos_child1 = 2*pos+1;
+		  pos_child2 = 2*pos+2;
 		}
 	      else
-		break; // Nothing to do. Heap property restored!
+		break; // Nothing left to be done. Heap property restored!
 	    }
 	  else
-	    {
-	      unsigned int score1{std::get<0>(heap_data[pos_child1])};
+	    {// Case with only one child
+	      unsigned int score1{heap_data[pos_child1].t0};
 	      if(score > score1)
 		{
 		  //Swap with child1
-		  pos_node_heap[std::get<1>(heap_data[pos_child1])] = pos;
-		  pos_node_heap[std::get<1>(heap_data[pos])] = pos_child1;
+		  pos_node_heap[heap_data[pos_child1].t1] = pos;
+		  pos_node_heap[heap_data[pos].t1] = pos_child1;
 
 		  // Swap triplet data
-		  std::tuple<unsigned int, unsigned int,
-			     unsigned int> temp = heap_data[pos_child1];
+		  Triplet temp{heap_data[pos_child1]};
 		  heap_data[pos_child1] = heap_data[pos];
 		  heap_data[pos] = temp;
 		  pos = pos_child1;
 		}
 	      else
-		break; // Nothing to do. Heap property restored!
+		break; // Nothing left to be done. Heap property restored!
 	    }
 	}
     }
@@ -363,9 +360,9 @@ void myHeap::remove(unsigned int pos_del)
 }
 
 
-std::tuple<unsigned int, unsigned int, unsigned int> myHeap::extract_min()
+Triplet myHeap::extract_min()
 {
-  std::tuple<unsigned int, unsigned int, unsigned int> out = heap_data[0];
+  Triplet out{heap_data[0]};
   this->remove(0);
   return out;
 }
@@ -375,9 +372,9 @@ void myHeap::print()
   std::cout << "> Printing out data stored in this myHeap... \n" << std::endl;
   std::cout << ">> (score, node, edge) \n";
   for(unsigned int i = 0; i != heap_data.size(); ++i)
-    std::cout << std::get<0>(heap_data[i]) << "\t"
-	 << std::get<1>(heap_data[i]) << "\t"
-	 << std::get<2>(heap_data[i]) << std::endl;
+    std::cout << heap_data[i].t0 << "\t"
+	      << heap_data[i].t1 << "\t"
+	      << heap_data[i].t2 << std::endl;
   std::cout << ">> (node, position) \n";
   for(unsigned int i = 0; i != heap_data.size(); ++i)
     std::cout << i << "\t"
@@ -913,53 +910,104 @@ void SCC_Kosaraju(Graph & gin, std::multiset<unsigned int> & all_SCC_sizes,
   Dijkstra's based algorithms
   ----------------------------------------------------------------------------*/
 
-/*bool comp(std::tuple<unsigned int, unsigned int, unsigned int> p1,
-	  std::tuple<unsigned int, unsigned int, unsigned int> p2)
-{ // WARNING: Here I invert the std heap behaviour to keep the smallest value
-  // at the top pf the heap!
-  return std::get<0>(p1) > std::get<0>(p2);
-  }*/
-
-/*/ Find all shortest paths from a source node and corresponding distances
-void Dijktra_shortest_paths(Graph & gin,  unsigned int start_node,
+// WARNING: Implemented as undirected for now!
+// Find all shortest paths from a source node and corresponding distances
+void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
 			std::vector<unsigned int> & dists,
 			std::vector< std::vector<unsigned int> > & paths)
 {
   // Prepare data structures
+
+  // Auxiliary integer to test if node is in heap
+  unsigned int not_in_heap{std::numeric_limits<unsigned int>::max()};
+  
   // Prepare vector to hold distances of each node to start_node
   if(dists.size() != 0) 
     dists.clear();
   dists.resize(gin.n(),1000000);
+  // Set start_node to zero distance
+  dists[start_node] = 0; 
+  
   // Prepare vector to hold shortest paths between each node and start_node
   if(paths.size() != 0) 
     paths.clear();
   paths.resize(gin.n());
-  // Prepare vector to check if in heap
-  std::vector<bool> in_heap(gin.n(),true);
-  dists[0] = 0; // Set start_node to zero distance
-  in_heap[0] = false; // and not in heap
+  paths[start_node].push_back(start_node);
 
-  // Prepare heap vector to hold nodes not in explored part
-  std::vector< std::tuple<unsigned int,
-			  unsigned int, unsigned int> > heap_nodes;
-  // Put all nodes in heap except first one.
-  for(unsigned int i = 1; i != gin.m(); ++i)
-    {
-      ////////////
+  // Prepare boolean to check if node is in explored set
+  std::vector<bool> explored(gin.n(),false);
+  explored[start_node] = true;
+  
+  // Prepare myHeap object
+  myHeap nodesHeap(gin.n());
+  // Deal separately with start node
+  // loop over start_node edges to populate nodesHeap
+  for(std::list<unsigned int>::iterator
+	it_edge = gin.nodes_[start_node].begin();
+      it_edge != gin.nodes_[start_node].end(); ++it_edge)
+    {// Assuming only one edge between any pair of nodes
+      // Get other node number
+      unsigned int node2{gin.edges_[*it_edge].second};
+      if(gin.edges_[*it_edge].first != start_node)
+	node2 = gin.edges_[*it_edge].first;
+      // Insert cost, node and edge in Heap
+      nodesHeap.insert(Triplet(gin.edges_[*it_edge].weight, node2, *it_edge));
+      ////std::cout << "Initial heap building..." << std::endl;
+      ///nodesHeap.print();
     }
- 
-  std::make_heap(heap_nodes.begin(), heap_nodes.end() ,comp);
-  // iterator to keep track of heap length
-  std::vector< std::tuple<unsigned int, unsigned int, unsigned int> >::iterator
-    it_heap_end = heap_nodes.end();
-  
-  
-  //Loop over all edges of start_node to prepare heap
-  
-  while(it_heap_end != heap_nodes.begin())
-    {
-      // Get minimum from heap to identify relevant edge
 
-      // Update all nodes
+  for(unsigned int i = 1; i != gin.n(); ++i)
+    {   
+      ////nodesHeap.print();
+      // Extract min and add to explored nodes
+      Triplet node_min{nodesHeap.extract_min()};
+      // Mark node explored
+      explored[node_min.t1] = true;
+
+      // Save distance
+      dists[node_min.t1] = node_min.t0;
+
+      // Save path
+      //// First work out origin node
+      unsigned int node1{gin.edges_[node_min.t2].first};
+      if(gin.edges_[node_min.t2].first == node_min.t1)
+	node1 = gin.edges_[node_min.t2].second;
+      //// Now copy path
+      paths[node_min.t1] = paths[node1];
+      //// and add extra edge
+      paths[node_min.t1].push_back(node_min.t1);
+      
+      // loop over edges of added node to enlarge heap
+      for(std::list<unsigned int>::iterator
+	    it_edge = gin.nodes_[node_min.t1].begin();
+	  it_edge != gin.nodes_[node_min.t1].end(); ++it_edge)
+	{
+	  // Get other node number
+	  unsigned int node2{gin.edges_[*it_edge].second};
+	  
+	  if(gin.edges_[*it_edge].second == node_min.t1)
+	    node2 = gin.edges_[*it_edge].first;
+	  if(!explored[node2])
+	    {
+	      // score of new path
+	      unsigned int score_try{dists[node_min.t1]
+		  + gin.edges_[*it_edge].weight};
+	      // position in heap (if valid)
+	      unsigned int pos2 = nodesHeap.pos_node_heap[node2];
+	      
+	      // If in heap and if we should replace
+	      if( pos2 != not_in_heap
+		  && score_try < nodesHeap.heap_data[pos2].t0)
+		{
+		  nodesHeap.remove(pos2);
+		  nodesHeap.insert(Triplet(score_try,node2, *it_edge));
+		}
+	      else if(pos2 == not_in_heap) // If not in heap add it
+		nodesHeap.insert(Triplet(score_try,node2, *it_edge));
+	    }
+	}	
     }
-}//*/
+
+      
+
+}

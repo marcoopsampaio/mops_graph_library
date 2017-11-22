@@ -73,34 +73,26 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   for(unsigned int i = 0; i < nprint && i < cfrom_nodes.size(); ++i)
     cout << cfrom_nodes[i] << ", \t";
   cout << "\n" << endl;
-  /*
-  std::multiset<unsigned int> all_SCC_sizes;
-  std::set<unsigned int> all_SCC_setsizes;
 
-  SCC_Kosaraju(g0, all_SCC_sizes, all_SCC_setsizes);
+  std::vector<unsigned int> dists;
+  std::vector< std::vector<unsigned int> > paths;
+  Dijkstra_shortest_paths(g0, 0, dists, paths);
 
-  std::cout << " all_SCC_sizes.size() is "
-	    << all_SCC_sizes.size() << std::endl;
-  std::cout << " all_SCC_setsizes.size() is "
-	    << all_SCC_setsizes.size() << std::endl;
-
-  std::cout << "Printing out multiplicity, SCC size pairs for the top 5:"
-	    << std::endl;
-  short int i{0};
-  for(std::set<unsigned int>::iterator it = --all_SCC_setsizes.end();
-      it != --all_SCC_setsizes.begin() && i != 5; --it)
+  cout << "> Printing out Dijkstra's algorithm results\n" << endl
+       << ">> Shortest paths and lengths "<< endl;
+  for(unsigned int i = 0; i != dists.size(); ++i)
     {
-      std::cout << all_SCC_sizes.count(*it) << " of size "<< *it<< std::endl;
-      ++i;
-    }*/
-}
+      cout << " Node " << i + 1 << " with path length " << dists[i] << " | Path: ";
+      for(unsigned int j = 0; j != paths[i].size(); ++j)
+	cout << paths[i][j] +1 << ", ";
+      cout << endl;
+    }
+  /**vector<unsigned int> ex{7,37,59,82,99,115,133,165,188,197};
+  for(unsigned int i = 0; i != ex.size(); ++i)
+    cout << dists[ex[i]-1]<<",";
+  cout << endl;**/
 
-/*bool comp(std::pair<unsigned int , unsigned int> p1,
-	  std::pair<unsigned int , unsigned int> p2)
-{ // WARNING: Here I invert the std heap behaviour to keep the smallest value
-  // at the top pf the heap!
-  return p1.second > p2.second;
-}//*/
+}
 
 int main(){
 
@@ -122,22 +114,10 @@ int main(){
   // Small connected graph
   run_all_tests("tests/graphs/dijkstra1.txt", 1, 4, false, 6, true);
   
-  //run_all_tests("tests/graphs/dijkstraData.txt", 1, 4, false, 200, true);
+  // Small connected graph
+  run_all_tests("tests/graphs/dijkstra2.txt", 1, 4, false, 6, true);
   
-  /*/ Small disconnected graph
-  run_all_tests("tests/graphs/graph1_cut1.txt", 1, 4, false, 6, true);
-
-  // Slightly larger connected graph
-  run_all_tests("tests/graphs/graph2_dir_edges.txt", 7, 2, false, 13, true);
-
-  // Slightly larger connected graph considering directed edges
-  run_all_tests("tests/graphs/graph2_dir_edges.txt", 5, 11, true, 13, true);
-  
-  // Slightly larger connected graph -- disconnected version
-  run_all_tests("tests/graphs/graph2_cut1.txt", 6, 13, false, 13, true);
-
-  // Large graph
-  run_all_tests("tests/graphs/SCC_graph_dir_edges.txt",
-		1, 501,false, 50, false);*/
+  // Small connected graph
+  run_all_tests("tests/graphs/dijkstraData.txt", 1, 4, false, 6, false);
   
 }

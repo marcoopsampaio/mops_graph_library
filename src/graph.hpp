@@ -20,17 +20,28 @@
 ////////////////////////////// Classes & Types /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+//typedef std::tuple<unsigned int, unsigned int, unsigned int> Triplet;
+
+class Triplet
+{
+public:
+  unsigned int t0, t1, t2;
+  Triplet(){};
+  Triplet(unsigned int t0_in, unsigned int t1_in,
+	  unsigned int t2_in): t0{t0_in}, t1{t1_in}, t2{t2_in}{}; 
+};
+
 class myHeap
 {
 public:
   // Contains score, node number and current edge associated with score
-  std::vector<std::tuple<unsigned int, unsigned int, unsigned int> > heap_data;
+  std::vector<Triplet > heap_data;
   // Vector to hold the location of each node in the heap vector;
   std::vector<unsigned int> pos_node_heap;
   unsigned int heapsize;
 
-  void insert(std::tuple<unsigned int, unsigned int, unsigned int> triplet);
-  std::tuple<unsigned int, unsigned int, unsigned int> extract_min();
+  void insert(Triplet triplet);
+  Triplet extract_min();
   void remove(unsigned int pos_del);
 
   // Constructor
@@ -132,6 +143,11 @@ public:
   friend void DFS_Kosaraju_reversed_(Graph & gin, unsigned int start_node);
 
   friend void DFS_Kosaraju_direct_(Graph & gin, unsigned int start_node);
+
+  friend void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
+				      std::vector<unsigned int> & dists,
+				      std::vector< std::vector<unsigned int> >
+				      & paths);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +209,7 @@ void DFS_reachable_from(Graph & gin,  unsigned int start_node,
   ----------------------------------------------------------------------------*/
 
 // Find all shortest paths from a source node and corresponding distances
-void Dijktra_shortest_paths(Graph & gin,  unsigned int start_node,
+void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
 			std::vector<unsigned int> & dists,
 			std::vector< std::vector<unsigned int> > & paths);
 
