@@ -15,14 +15,29 @@
 
 
 // Constructor from stream
-Graph::Graph(std::istream & in_stream, bool input_type, bool directed,
+Graph::Graph(std::istream & in_stream, char input_type, bool directed,
 	     bool weighted)
 {
-  if(input_type)
-    this->stream_read1_graph_by_nodes(in_stream, directed, weighted);
-  else
-    this->stream_read0_graph_by_edges(in_stream, directed);
+  switch(input_type)
+    {
+    case 0:
+      this->stream_read0_graph_by_edges(in_stream, directed);
+      break;
+    case 1:
+      this->stream_read1_graph_by_nodes(in_stream, directed, weighted);
+      break;
+    case 2:
+      this->stream_read2_graph_by_nodes_and_edges(in_stream, directed,
+						  weighted);
+      break;
+    default:
+      std::cerr << "error: from Graph::Graph(std::istream & in_stream, "
+	"char input_type, bool directed, bool weighted): bad input_type with "
+	"value --> " << input_type << "." << std::endl;
+      exit(EXIT_FAILURE);
+    }
 }
+
 
 
 /////////////////////
@@ -93,7 +108,8 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
   /*******************************************
     Variables to read graph from input stream
   ********************************************/
-  std::map<unsigned int, std::list< std::pair<unsigned int, unsigned int> > >
+  std::unordered_map<unsigned int, std::list< std::pair<unsigned int,
+							double> > >
     graph_in_by_nodes; //input graph
   std::string line; // string to read lines of file one by one
   unsigned int i; // vertex raw index
@@ -104,31 +120,33 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
   while(std::getline(in_stream,line))
     {
       std::stringstream ss(line); // current vertex info
-      unsigned int j, weight; // integer to read incident vertex in edge
+      unsigned int j; // integer to read incident vertex in edge
+      double weight; // weight of edge
       char dummy;
       ss >> i; // read current vertex index
       // list of vertices reached from i0
-      std::list<std::pair<unsigned int, unsigned int> > jlist; 
+      std::list<std::pair<unsigned int, double> > jlist; 
       while(ss >> j)
 	{
 	  ss >> dummy;
 	  ss >> weight;
 	  // read vertices into list
-	  jlist.push_back(std::pair<unsigned int, unsigned int>(j,weight)); 
+	  jlist.push_back(std::pair<unsigned int, double>(j,weight)); 
 	}
       graph_in_by_nodes[i] = jlist; //add line to graph
     }
   
   // new index to run from zero to graph_in_by_nodes.size() -1
-  unsigned int i0{0}; 
-  std::map<unsigned int, unsigned int> indx, indx0; // map to save standardized
+  unsigned int i0{0};
+  // map to save standardized
+  std::unordered_map<unsigned int, unsigned int> indx, indx0; 
   // index
   
   /*******************************************
     Re-map indices
   ********************************************/
-  for(std::map<unsigned int,
-	std::list<std::pair<unsigned int, unsigned int> > >::iterator
+  for(std::unordered_map<unsigned int,
+	std::list<std::pair<unsigned int, double> > >::iterator
 	it = graph_in_by_nodes.begin(); it != graph_in_by_nodes.end(); ++it)
     {
       id_nodes_.push_back(it->first);
@@ -152,15 +170,15 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
   unsigned int iedge = 0;
   for(unsigned int i0 = 0; i0 != graph_in_by_nodes.size(); ++i0)
     {
-      for(std::list< std::pair<unsigned int, unsigned int> >::iterator
+      for(std::list< std::pair<unsigned int, double> >::iterator
 	    it = graph_in_by_nodes.at(id_nodes_[i0]).begin();
 	  it != graph_in_by_nodes.at(id_nodes_[i0]).end(); ++it)
 	{
 	    
 	  if(index_of_ids_[it->first] > i0) // avoid double counting of edges
 	    {
-	      this->edges_.push_back(Edge(i0, index_of_ids_[it->first], it->second,
-					  directed)); // Add edge
+	      this->edges_.push_back(Edge(i0, index_of_ids_[it->first],
+					  it->second, directed)); // Add edge
 	      nodes_[i0].push_back(iedge); // add edge to first node
 	      // add edge to second node
 	      nodes_[index_of_ids_[it->first]].push_back(iedge); 
@@ -182,6 +200,62 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
 	  exit(EXIT_FAILURE);
 	}	
   
+}
+
+// Read graph from list of nodes
+void Graph::stream_read2_graph_by_nodes_and_edges(std::istream & in_stream,
+					bool directed, bool weighted)
+{
+  /*******************************************
+    Variables to read graph from input stream
+  ********************************************/
+  /*std::map<unsigned int, std::list< std::pair<unsigned int, double> > >
+    graph_in_by_nodes; //input graph*/
+  
+  std::string line; // string to read lines of file one by one
+  unsigned int Nnodes; // integer to read number of nodes
+
+  // Read first the number of nodes present in the file and skip to next line
+  in_stream >> Nnodes;
+  in_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  
+  // Skip the description line for the columns of the nodes
+  std::getline(in_stream,line);
+  // Read all node numbers and node coordinates in a loop
+  nodes_.resize(Nnodes);
+  id_nodes_.resize(Nnodes);
+  for(unsigned int inode = 0; inode != Nnodes; ++inode)
+    {
+      in_stream >> id_nodes_[inode]; // read id of node
+      // Add coordinates of node to relevant vector
+      std::pair<double, double> coords;
+      in_stream >> coords.first;
+      in_stream >> coords.second;
+      nodes_coords_.push_back(coords);
+      // Also save mapping of indices
+      index_of_ids_[id_nodes_[inode]] = inode;
+    }
+
+  // Skip from previous line read o next one
+  in_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  // Skip description lines for the columns of the edges
+  std::getline(in_stream,line);
+
+  // Read edges in a loop until end of file
+  unsigned int iedge{0}; // edge internal id
+  while(std::getline(in_stream,line))
+    {
+      std::stringstream ss(line); // current edge info
+      unsigned int n1, n2; // integers to read nodes
+      double weight; // weight of edge
+      ss >> n1 >> n2 >> weight;
+      // Add edge to edges list
+      edges_.push_back(Edge(n1, n2, weight, directed));
+      // Add edge to nodes list
+      nodes_[n1].push_back(iedge);
+      nodes_[n2].push_back(iedge);
+      ++iedge;
+    }
 }
 
 void Graph::clear()
@@ -289,7 +363,7 @@ void myHeap::remove(unsigned int pos_del)
       heap_data[pos_del] = heap_data[--heapsize];
       // correct stored position
       pos_node_heap[heap_data[heapsize].t1] = pos_del;
-      unsigned int score{heap_data[pos_del].t0};
+      double score{heap_data[pos_del].t0};
       // Bubble down if necessary to restore heap property
       unsigned int pos_child1{2*pos_del+1}, pos_child2{2*(pos_del+1)};
       unsigned int pos{pos_del};
@@ -297,8 +371,8 @@ void myHeap::remove(unsigned int pos_del)
 	{
 	  if(pos_child2 < heapsize)
 	    {
-	      unsigned int score1{heap_data[pos_child1].t0};
-	      unsigned int score2{heap_data[pos_child2].t0};
+	      double score1{heap_data[pos_child1].t0};
+	      double score2{heap_data[pos_child2].t0};
 	      if(score > score1 && score1 <= score2)
 		{
 		  //Swap with child1
@@ -332,7 +406,7 @@ void myHeap::remove(unsigned int pos_del)
 	    }
 	  else
 	    {// Case with only one child
-	      unsigned int score1{heap_data[pos_child1].t0};
+	      double score1{heap_data[pos_child1].t0};
 	      if(score > score1)
 		{
 		  //Swap with child1
@@ -913,7 +987,7 @@ void SCC_Kosaraju(Graph & gin, std::multiset<unsigned int> & all_SCC_sizes,
 // WARNING: Implemented as undirected for now!
 // Find all shortest paths from a source node and corresponding distances
 void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
-			std::vector<unsigned int> & dists,
+			std::vector<double> & dists,
 			std::vector< std::vector<unsigned int> > & paths)
 {
   // Prepare data structures
@@ -990,7 +1064,7 @@ void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
 	  if(!explored[node2])
 	    {
 	      // score of new path
-	      unsigned int score_try{dists[node_min.t1]
+	      double score_try{dists[node_min.t1]
 		  + gin.edges_[*it_edge].weight};
 	      // position in heap (if valid)
 	      unsigned int pos2 = nodesHeap.pos_node_heap[node2];
@@ -1008,6 +1082,137 @@ void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
 	}	
     }
 
+}
+
+double dist2D(double x0, double y0, double x1, double y1)
+{
+  return sqrt((x0 - x1)*(x0 - x1) + (y0 - y1)*(y0 - y1));
+}
+
+// WARNING: Implemented as undirected for now!
+// Finds shortest path between source node and target node and returns distance
+// as well as the path
+double Astar_shortest_path(Graph & gin, unsigned int start_node,
+			  unsigned int target_node,
+			  std::vector<unsigned int> & path)
+{
+  // Prepare data structures
+  // Auxiliary integer to test if node is in heap
+  unsigned int not_in_heap{std::numeric_limits<unsigned int>::max()};
+  
+  // Prepare vector to hold distances of each node to start_node
+  std::vector<double> dists(gin.n(),std::numeric_limits<double>::max());
+  // Set start_node to zero distance
+  dists[start_node] = 0; 
+  
+  // Prepare vector to hold shortest paths between each explored node and
+  // start_node
+  std::vector<std::vector<unsigned int> > paths(gin.n());
+  paths[start_node].push_back(start_node);
+  
+  // Prepare boolean to check if node is in explored set
+  std::vector<bool> explored(gin.n(),false);
+  explored[start_node] = true;
+  
+  // Prepare myHeap object
+  myHeap nodesHeap(gin.n());
+  // Deal separately with start node
+  // loop over start_node edges to populate nodesHeap
+  for(std::list<unsigned int>::iterator
+	it_edge = gin.nodes_[start_node].begin();
+      it_edge != gin.nodes_[start_node].end(); ++it_edge)
+    {// Assuming only one edge between any pair of nodes
+      // Get other node number
+      unsigned int node2{gin.edges_[*it_edge].second};
+      if(gin.edges_[*it_edge].first != start_node)
+	node2 = gin.edges_[*it_edge].first;
+      // Compute minimum cost to target node
+      // WARNING!!!! This is inefficient as I am taking square roots.
+      //    In the future I may include the "running" distance in the
+      //    heap to avoid doing this and compare squared costs 
+      double cost_heur_bound{dist2D(gin.nodes_coords_[node2].first,
+				       gin.nodes_coords_[node2].second,
+				       gin.nodes_coords_[target_node].first,
+				       gin.nodes_coords_[target_node].second)
+	  + gin.edges_[*it_edge].weight};
+      // Insert cost, node and edge in Heap
+      nodesHeap.insert(Triplet(cost_heur_bound, node2, *it_edge));
+    }
+  
+  /*std::cout << "Initial heap building..." << std::endl; // debug print out
+    nodesHeap.print();*/
+  
+  // Exploring graph
+  while(nodesHeap.heapsize != 0 )
+    {   
+      // Extract min and add to explored nodes
+      Triplet node_min{nodesHeap.extract_min()};
+      // Mark node explored
+      explored[node_min.t1] = true;
+      
+      double heur{dist2D(gin.nodes_coords_[node_min.t1].first,
+			 gin.nodes_coords_[node_min.t1].second,
+			 gin.nodes_coords_[target_node].first,
+			 gin.nodes_coords_[target_node].second)};
+
+      // First work out origin node
+      unsigned int node1{gin.edges_[node_min.t2].first};
+      if(gin.edges_[node_min.t2].first == node_min.t1)
+	node1 = gin.edges_[node_min.t2].second;
+      
+      // Save squared distance
+      dists[node_min.t1] = node_min.t0 - heur;
+      // Save path
+      //// copy path
+      paths[node_min.t1] = paths[node1];
+      //// and add extra edge
+      paths[node_min.t1].push_back(node_min.t1);
       
 
+      // Stop search if we reached the target node
+      if(node_min.t1 == target_node)
+	break;
+      
+      // loop over edges of added node to enlarge heap
+      for(std::list<unsigned int>::iterator
+	    it_edge = gin.nodes_[node_min.t1].begin();
+	  it_edge != gin.nodes_[node_min.t1].end(); ++it_edge)
+	{
+	  // Get other node number
+	  unsigned int node2{gin.edges_[*it_edge].second};
+	  if(gin.edges_[*it_edge].second == node_min.t1)
+	    node2 = gin.edges_[*it_edge].first;
+	  
+	  if(!explored[node2])
+	    {
+	      
+	      // minimum score of new path
+	      // WARNING!!!! This is inefficient as I am taking square roots.
+	      //    In the future I may include the "running" distance in the
+	      //    heap to avoid doing this and compare squared costs  
+	      double score_try{dist2D(gin.nodes_coords_[node2].first,
+				      gin.nodes_coords_[node2].second,
+				      gin.nodes_coords_[target_node].first,
+				      gin.nodes_coords_[target_node].second)
+		  + dists[node_min.t1]+ gin.edges_[*it_edge].weight};
+	      // position in heap (if valid)
+	      unsigned int pos2 = nodesHeap.pos_node_heap[node2];
+	      
+	      // If in heap and if we should replace
+	      if( pos2 != not_in_heap
+		  && score_try < nodesHeap.heap_data[pos2].t0)
+		{
+		  nodesHeap.remove(pos2);
+		  nodesHeap.insert(Triplet(score_try, node2, *it_edge));
+		}
+	      else if(pos2 == not_in_heap) // If not in heap add it
+		nodesHeap.insert(Triplet(score_try, node2, *it_edge));
+	    }
+	}
+      
+      /// nodesHeap.print(); // debug print out
+    }
+  
+  path = paths[target_node];
+  return dists[target_node];
 }

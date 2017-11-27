@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <utility>
 #include <list>
 #include <limits>
@@ -25,9 +25,10 @@
 class Triplet
 {
 public:
-  unsigned int t0, t1, t2;
+  double t0;
+  unsigned int t1, t2;
   Triplet(){};
-  Triplet(unsigned int t0_in, unsigned int t1_in,
+  Triplet(double t0_in, unsigned int t1_in,
 	  unsigned int t2_in): t0{t0_in}, t1{t1_in}, t2{t2_in}{}; 
 };
 
@@ -58,43 +59,49 @@ public:
 class Edge
 {
 public:
-  unsigned int first, second, weight;
+  unsigned int first, second;
+  double weight;
   const bool directed;
   Edge(unsigned int first_in,unsigned int second_in):
-    first{first_in}, second{second_in}, weight{1}, directed{false}{};
+    first{first_in}, second{second_in}, weight{1.}, directed{false}{};
   
   Edge(unsigned int first_in,unsigned int second_in, bool directed_in):
-    first{first_in}, second{second_in}, weight{1}, directed{directed_in}{};
+    first{first_in}, second{second_in}, weight{1.}, directed{directed_in}{};
   
-  Edge(unsigned int first_in,unsigned int second_in, unsigned int weight_in):
+  Edge(unsigned int first_in,unsigned int second_in, double weight_in):
     first{first_in},second{second_in}, weight{weight_in}, directed{false}{};
   
-  Edge(unsigned int first_in, unsigned int second_in, unsigned int weight_in,
+  Edge(unsigned int first_in, unsigned int second_in, double weight_in,
        bool directed_in):first{first_in}, second{second_in}, weight{weight_in},
 			 directed{directed_in}{};
 
 };
 
 typedef std::vector<std::list<unsigned int> > NodesVec;
+typedef std::vector<std::pair<double, double> > NodesCoords;
 typedef std::vector<Edge> EdgesVec;
 
 class Graph
 {
   NodesVec nodes_; // Nodes in adjacency list
   EdgesVec edges_; // Edges in adjacency list
+  NodesCoords nodes_coords_; // 2D coordinates of nodes
   // Map to translate internal node representation to external
   std::vector<unsigned int> id_nodes_;
-  std::map<unsigned int,unsigned int> index_of_ids_;
+  std::unordered_map<unsigned int,unsigned int> index_of_ids_;
 
   // Utilities for constructor
   void stream_read0_graph_by_edges(std::istream & in_stream, bool directed = 0);
   void stream_read1_graph_by_nodes(std::istream & in_stream, bool directed = 0,
 				   bool weighted = 0);
+  void stream_read2_graph_by_nodes_and_edges(std::istream & in_stream,
+					     bool directed = 0,
+					     bool weighted = 0);
   
 public:
   // Constructors
   Graph(){}; // start empty (to add nodes and edges in algorithms)
-  Graph(std::istream & in_stream, bool input_type = 0,
+  Graph(std::istream & in_stream, char input_type = 0,
 	bool directed = 0, bool weighted = 0); // from stream
   ////////Graph(EdgesVec & edges_in, bool directed = 0); // from vector of edges
   
@@ -145,9 +152,12 @@ public:
   friend void DFS_Kosaraju_direct_(Graph & gin, unsigned int start_node);
 
   friend void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
-				      std::vector<unsigned int> & dists,
+				      std::vector<double> & dists,
 				      std::vector< std::vector<unsigned int> >
 				      & paths);
+  friend double Astar_shortest_path(Graph & gin,  unsigned int start_node,
+				    unsigned int target_node,
+				    std::vector<unsigned int> & path);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -209,9 +219,13 @@ void DFS_reachable_from(Graph & gin,  unsigned int start_node,
   ----------------------------------------------------------------------------*/
 
 // Find all shortest paths from a source node and corresponding distances
-void Dijkstra_shortest_paths(Graph & gin,  unsigned int start_node,
+void Dijkstra_shortest_paths(Graph & gin, unsigned int start_node,
 			std::vector<unsigned int> & dists,
 			std::vector< std::vector<unsigned int> > & paths);
+
+double Astar_shortest_path(Graph & gin, unsigned int start_node,
+			   unsigned int target_node,
+			   std::vector<unsigned int> & path);
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TO DO: make function that returns connected graph and then make the function

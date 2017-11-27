@@ -21,3 +21,10 @@ or if you need to clean completely the compilation run
 $ make cleanall
 ```
 
+Algorithms implemented so far include:
+* **Breadth First Search (BFS)**: To compute paths and distances, and connected components of a graph.
+* **Depth First Search:** Also so compute paths and connectedness, but also all strongly connected components for directed graphs.
+* **Heap class:** For Dijkstra's algorithm
+* **Dijkstra's algorithm:** Shortest paths on weighted graphs
+* **A* algorithm:** Shortests paths on a weighted graph with a euclidean heuristic.
+

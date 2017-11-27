@@ -7,12 +7,13 @@
 
 using namespace std;
 
-void run_all_tests(string filename, unsigned int node1, unsigned int node2,
+void run_all_tests(string filename, unsigned int node1,
+		   vector< pair<unsigned int, unsigned int > > pairs_nodes,
 		   bool directed,unsigned int nprint, bool printgraph)
 {
   ifstream graphin(filename);
   
-  cout << ">>> Testing Dijkstra's like algorithms -----------------------\n\n"
+  cout << ">>> Testing A* like algorithms -----------------------\n\n"
        << "Graph filename is " << filename << "\n";
   if(directed)
     cout << "Loading graph as DIRECTED";
@@ -21,7 +22,7 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   cout << "\n\n" << flush;
   
   cout << "> Loading graph into memory ... " << endl;
-  Graph g0(graphin, 1, directed, 1); // undirected weighted read from nodes list
+  Graph g0(graphin, 2, directed, 1); // undirected weighted read from nodes list
   
   std::clog<<" ... done with loading graph! \n "<<endl;
   cout << "number of nodes is " << g0.n() << endl;
@@ -29,7 +30,7 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
   
   if(printgraph)
     g0.print_graph(cout, true);
- 
+
   cout << "> Applying DFS to find all connected components (regardless of "
     "directionality) ... \n" << endl;
   
@@ -74,23 +75,30 @@ void run_all_tests(string filename, unsigned int node1, unsigned int node2,
     cout << cfrom_nodes[i] << ", \t";
   cout << "\n" << endl;
 
-  std::vector<double> dists;
-  std::vector< std::vector<unsigned int> > paths;
-  Dijkstra_shortest_paths(g0, 0, dists, paths);
 
-  cout << "> Printing out Dijkstra's algorithm results\n" << endl
-       << ">> Shortest paths and lengths "<< endl;
-  for(unsigned int i = 0; i != dists.size(); ++i)
+
+  cout << "> Testing now several pairs of points for A* algorithm" << std::endl;
+
+  for(unsigned int i = 0; i != pairs_nodes.size(); ++i)
     {
-      cout << " Node " << i + 1 << " with path length " << dists[i] << " | Path: ";
-      for(unsigned int j = 0; j != paths[i].size(); ++j)
-	cout << paths[i][j] +1 << ", ";
+      std::vector<unsigned int> path;
+      double dist{Astar_shortest_path(g0, pairs_nodes[i].first,
+				      pairs_nodes[i].second, path)};
+      
+    /*Dijkstra_shortest_paths(g0, 0, dists, paths);*/
+      cout << "> Printing out A* algorithm results\n" << endl
+	   << ">> Shortest path with length " << dist << " between node "
+	   << pairs_nodes[i].first << " and "
+	   << "target node  "<< pairs_nodes[i].second << ": ";
+      
+      for(unsigned int j = 0; j != path.size(); ++j)
+	if(j == 0)
+	  cout << path[j];
+	else
+	  cout << ", " << path[j] ;
+      
       cout << endl;
     }
-  /**vector<unsigned int> ex{7,37,59,82,99,115,133,165,188,197};
-  for(unsigned int i = 0; i != ex.size(); ++i)
-    cout << dists[ex[i]-1]<<",";
-  cout << endl;**/
 
 }
 
@@ -105,19 +113,18 @@ int main(){
 
   cout << "\n*************************************"
        << "\n***                               ***"
-       << "\n*** Tests of dijkstra's algorithm ***"
+       << "\n***  Tests of A* like algorithms  ***"
        << "\n***                               ***"
        << "\n***                               ***"
        << "\n*************************************\n\n"
        << flush;
 
+  vector<pair<unsigned int, unsigned int> > pairs_nodes;
+  pairs_nodes.push_back(make_pair(0,10));
+  pairs_nodes.push_back(make_pair(8,2));
+  pairs_nodes.push_back(make_pair(2,8));
   // Small connected graph
-  run_all_tests("tests/graphs/dijkstra1.txt", 1, 4, false, 6, true);
-  
-  // Small connected graph
-  run_all_tests("tests/graphs/dijkstra2.txt", 1, 4, false, 6, true);
-  
-  // Small connected graph
-  run_all_tests("tests/graphs/dijkstraData.txt", 1, 4, false, 6, false);
+  run_all_tests("tests/graphs/graph_geo1.txt", 0, pairs_nodes, false, 6, true);
+
   
 }
