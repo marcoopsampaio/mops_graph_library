@@ -26,5 +26,5 @@ Algorithms implemented so far include:
 * **Depth First Search:** Also so compute paths and connectedness, but also all strongly connected components for directed graphs.
 * **Heap class:** For Dijkstra's algorithm
 * **Dijkstra's algorithm:** Shortest paths on weighted graphs
-* __A* algorithm:__ Shortests paths on a weighted graph with a euclidean heuristic.
+* __A* algorithm:__ Shortests paths on a weighted graph with an Euclidean heuristic.
 
