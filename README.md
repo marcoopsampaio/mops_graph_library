@@ -2,7 +2,16 @@ Graph utilities library
 =======================
 ### by Marco O. P. Sampaio
 
-This is a simple library with a Graph class and various algorithms. To compile the library you will need a ```C++11``` compliant compiler. To compile all the sources run
+This is a simple library with a Graph class and various algorithms. Algorithms implemented so far include:
+* **Breadth First Search (BFS)**: To compute paths and distances, and connected components of a graph.
+* **Depth First Search (DFS):** Also to compute paths and connectedness, and to compute all strongly connected components for directed graphs.
+* **Heap class:** For Dijkstra's algorithm.
+* **Dijkstra's algorithm:** Shortest paths on weighted graphs.
+* __A* algorithm:__ Shortests paths on a weighted graphs with an Euclidean heuristic.
+
+
+
+To compile the library you will need a ```C++11``` compliant compiler. To compile all the sources run
 
 ```bash
 $ make
@@ -20,11 +29,3 @@ or if you need to clean completely the compilation run
 ```bash
 $ make cleanall
 ```
-
-Algorithms implemented so far include:
-* **Breadth First Search (BFS)**: To compute paths and distances, and connected components of a graph.
-* **Depth First Search:** Also so compute paths and connectedness, but also all strongly connected components for directed graphs.
-* **Heap class:** For Dijkstra's algorithm
-* **Dijkstra's algorithm:** Shortest paths on weighted graphs
-* __A* algorithm:__ Shortests paths on a weighted graph with an Euclidean heuristic.
-
