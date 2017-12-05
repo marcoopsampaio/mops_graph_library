@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <utility>
 #include <list>
 #include <limits>
@@ -88,7 +88,7 @@ class Graph
   NodesCoords nodes_coords_; // 2D coordinates of nodes
   // Map to translate internal node representation to external
   std::vector<unsigned int> id_nodes_;
-  std::unordered_map<unsigned int,unsigned int> index_of_ids_;
+  std::map<unsigned int,unsigned int> index_of_ids_;
 
   // Utilities for constructor
   void stream_read0_graph_by_edges(std::istream & in_stream, bool directed = 0);

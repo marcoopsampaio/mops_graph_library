@@ -108,7 +108,7 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
   /*******************************************
     Variables to read graph from input stream
   ********************************************/
-  std::unordered_map<unsigned int, std::list< std::pair<unsigned int,
+  std::map<unsigned int, std::list< std::pair<unsigned int,
 							double> > >
     graph_in_by_nodes; //input graph
   std::string line; // string to read lines of file one by one
@@ -139,13 +139,13 @@ void Graph::stream_read1_graph_by_nodes(std::istream & in_stream,
   // new index to run from zero to graph_in_by_nodes.size() -1
   unsigned int i0{0};
   // map to save standardized
-  std::unordered_map<unsigned int, unsigned int> indx, indx0; 
+  std::map<unsigned int, unsigned int> indx, indx0; 
   // index
   
   /*******************************************
     Re-map indices
   ********************************************/
-  for(std::unordered_map<unsigned int,
+  for(std::map<unsigned int,
 	std::list<std::pair<unsigned int, double> > >::iterator
 	it = graph_in_by_nodes.begin(); it != graph_in_by_nodes.end(); ++it)
     {
